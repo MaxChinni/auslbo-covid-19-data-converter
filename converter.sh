@@ -1,5 +1,15 @@
 #!/bin/bash
 
+extractDateFromFilename()
+{
+    local extrDate
+
+    extrDate="$(basename "$1" | sed -r 's/^.*([0-9]{2})\.([0-9]{2})\.([0-9]{4}).*$/\3-\2-\1/')"
+    date +'%Y-%m-%d' -d "$extrDate"
+}
+
+extractDateFromFilename "$1"
+
 pdftotext "$1" - | \
     tr -d '' | \
     awk '
@@ -8,9 +18,11 @@ pdftotext "$1" - | \
         if (length(labels) == 0) {
             return
         }
-        print "#", title
+        printf "\n# %s\n\n", title
+        printf "| %-30s | %3s |\n", labelName, " n "
+        printf "+--------------------------------+-----+\n", labelName, ""
         for (h in labels) {
-            printf "%30s | %d\n", labels[h], values[h]
+            printf "| %-30s | %3d |\n", labels[h], values[h]
         }
     }
     {
@@ -28,10 +40,12 @@ pdftotext "$1" - | \
                 title = prevLine
             }
             section = $0
+            labelName = $0
             c = 0
         } else if ($0 == "Comune") {
             title = prevLine
             section = $0
+            labelName = $0
             c = 0
         } else if ($0 == "Totale") {
             section = $0
