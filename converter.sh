@@ -11,6 +11,7 @@ extractDateFromFilename()
 parseFile()
 {
     pdftotext -layout "$1" - | \
+        tr -d '' | \
         awk -v theDate="$theDate" '
         function printData()
         {
@@ -45,6 +46,10 @@ parseFile()
             knownHeaders[1] = "Numero di persone positive a SARS-CoV-2"
             knownHeaders[2] = "Numero di persone in isolamento fiduciario in sorveglianza"
             knownHeaders[3] = "Numero di persone decedute"
+            knownHeaders[4] = "Distribuzione per Comune delle persone positive a SARS-CoV-2"
+            knownHeaders[5] = "Distribuzione per Comune delle persone in isolamento fiduciario in sorveglianza"
+            knownHeaders[6] = "Numero di persone guarite clinicamente"
+            knownHeaders[7] = "Numero di persone guarite"
 
             # Init
             tableTitle = ""
@@ -54,14 +59,20 @@ parseFile()
         }
         {
             line = trim($0)
-            print "DEBUG", "SECTION", section, "LINE:", line, "LENGTH", length(line)
+            if (cut > 1) {
+                line = trim(substr(line, 1, cut - 1))
+            }
+            print "DEBUG", cut, "SECTION", section, "LINE:", line, "LENGTH", length(line)
 
-            if (line ~ /Totale /) {
+            if (line == "") {
+                next
+            } else if (line ~ /Totale /) {
                 # End section
                 printData()
                 section = ""
                 maxc = 0
                 l = 0
+                cut = 1
                 delete tline
             } else if (section != "") {
                 # Working on a section
@@ -79,49 +90,23 @@ parseFile()
                 for (k in knownHeaders) {
                     h = knownHeaders[k]
                     if (line == h) {
-                        print "++++",h
+                        cut = 1
                         section = h
-                        tableTitle = h
                         break
                     }
+                    if (h == "Numero di persone guarite") {
+                        if ( (cut = match(line, " "h"$")) > 1 ) {
+                            section = h
+                            break
+                        }
+                    }
+                }
+
+                if (section == "") {
+                    # unk line
+                    print "DEBUG", "SECTION", section, "LINE:", line, "LENGTH", length(line)
                 }
             }
-
-#              if ($0 ~ /^[[:space:]]*$/) {
-#                  # empty line
-#                  if (section == "values" && c > 0) {
-#                      printData()
-#                      split("", labels, ":")
-#                  }
-#              } else if ($0 ~ /^Numero /) {
-#                  title = $0
-#                  gsub("/^ *(.*) *$/", "xx \1", title)
-#              } else if ($0 == "Distretto") {
-#                  if (prevLine != "") {
-#                      title = prevLine
-#                      gsub("/^ *(.*) *$/", "xx \1", title)
-#                  }
-#                  section = $0
-#                  labelName = $0
-#                  c = 0
-#              } else if ($0 == "Comune") {
-#                  title = prevLine
-#                  gsub("/^ *(.*) *$/", "xx \1", title)
-#                  section = $0
-#                  labelName = $0
-#                  c = 0
-#              } else if ($0 == "Totale") {
-#                  section = $0
-#              } else if ($0 == "∆" || $0 == "n") {
-#                  # end section "Distretto"
-#                  section = "values"
-#                  split("", values, ":")
-#                  c = 0
-#              } else if (section == "Distretto" || section == "Comune") {
-#                  labels[++c] = $0
-#              } else if (section == "values" && $0 !~ /^\+/) {
-#                  values[++c] = $0
-#              }
 
             prevLine = line
         }'
