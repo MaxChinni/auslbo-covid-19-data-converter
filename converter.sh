@@ -61,10 +61,15 @@ parseFile()
     convertPDFtoTXT "$1"
     normalizeFile
 
-    awk -v theDate="$theDate" '
+    awk -v theDate="$theDate" -v skipHeader="$2" '
         function printData()
         {
-            for (il = 1; il < l; il++) {
+            if ( ! skipHeader ) {
+                print "date,label,place,n,delta"
+                skipHeader = 1
+            }
+
+            for (il = 2; il < l; il++) {
                 printf "%s,%s,", theDate, section
                 for (ic = 1; ic < maxc; ic++) {
                     printf "%s,", tline[il"@"ic]
@@ -166,5 +171,6 @@ TMP=$(mktemp)
 for f in "$@"; do
     theDate=$(extractDateFromFilename "$f")
     [[ -z $theDate ]] && { echo "$(basename "$0"): cannot get date for $f" >&2; exit 2; }
-    parseFile "$f"
+    parseFile "$f" "$skipHeader"
+    (( skipHeader++ ))
 done
