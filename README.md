@@ -1,6 +1,7 @@
-# N.B.
-Converter seems to work on data from 2020-03-26
+# Data extractor for AUSL Bologna Covid-19
 
-## Usage
+Data from [[https://www.ausl.bologna.it/per-i-cittadini/coronavirus/report-casi-positivi-e-in-sorveglianza]].
 
-    ./converter.sh data/Report\ casi\ e\ sorveglianza\ AUSL\ BO\ 2[6-9]* | fzf
+## Usage example
+
+    ./converter.sh data/Report*.pdf | fzf
