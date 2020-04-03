@@ -66,7 +66,7 @@ parseFile()
         function printData()
         {
             if ( ! skipHeader ) {
-                print "date,label,place,n,delta"
+                print "date|label|place|n|delta"
                 skipHeader = 1
             }
 
