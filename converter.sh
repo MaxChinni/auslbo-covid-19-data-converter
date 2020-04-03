@@ -28,6 +28,7 @@ normalizeFile()
     # Add a useful new line
     sed -i -r 's// /g' "$TMP_TXT"
     sed -i -r 's/^( *Distribuzione per Comune delle persone positive a SARS-CoV-2)$/\n\1/' "$TMP_TXT"
+    sed -i -r 's/^( *Casi positivi per Distretto per 10.000 abitanti)$/\n\1/' "$TMP_TXT"
 
     # Remove second column for "Numero di persone guarite"
     awk '
@@ -70,9 +71,9 @@ parseFile()
             }
 
             for (il = 2; il < l; il++) {
-                printf "%s,%s,", theDate, section
+                printf "%s|%s|", theDate, section
                 for (ic = 1; ic < maxc; ic++) {
-                    printf "%s,", tline[il"@"ic]
+                    printf "%s|", tline[il"@"ic]
                 }
                 printf "\n"
             }
@@ -126,7 +127,7 @@ parseFile()
 
             if (line == "" && ! section) {
                 next
-            } else if (line ~ /Totale |Alcune caratteristiche dei casi positivi/) {
+            } else if (line ~ /Totale |Alcune caratteristiche dei casi positivi|Et. *Genere/) {
                 # End section
                 printData()
                 section = ""
